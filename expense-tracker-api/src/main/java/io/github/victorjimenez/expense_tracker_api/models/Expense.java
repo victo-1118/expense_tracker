@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 
 @NoArgsConstructor
+@Table(indexes = {@Index(name = "expense_type_id_index", columnList = "expense_type_id")})
 public class Expense {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

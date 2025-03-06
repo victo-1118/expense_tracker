@@ -14,7 +14,18 @@ import lombok.NoArgsConstructor;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "card_type", discriminatorType = DiscriminatorType.STRING)
-@Table(name = "\"base_card\"")
+@Table(name = "\"base_card\"", indexes = {
+    @Index(name="card_balance_index", columnList = "balance"),
+    @Index(name="expense_type_index", columnList = "expenseTypeToPayFor"),
+    @Index(name="eligible_expense_index", columnList = "eligibleExpenses"),
+    @Index(name="payment_history_index", columnList = "paymentHistories"),
+    @Index(name="debit_card_budget_index", columnList = "card_type, budget"),
+    @Index(name="credit_card_credit_limit_index", columnList = "card_type, creditLimit"),
+    @Index(name="credit_card_personal_limit_index", columnList = "card_type, personalLimit"),
+    @Index(name="credit_card_interest_rate_index", columnList = "card_type, interestRate"),
+    @Index(name="credit_card_minimum_payment_index", columnList = "card_type, minimumPayment"),
+    
+})
 
 @NoArgsConstructor
 public abstract class BaseCard{

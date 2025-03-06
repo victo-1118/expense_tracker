@@ -13,10 +13,15 @@ import lombok.AccessLevel;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 
 import jakarta.persistence.CascadeType;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
+@Table(indexes={@Index(name="expense_id_index", columnList="expense_id")
+    ,@Index(name="paid_by_card_number_index", columnList="paid_by_card_number"),
+    @Index(name="payment_date_index", columnList="payment_date")})
 public class PaymentHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

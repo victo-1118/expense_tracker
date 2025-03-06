@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
+@Table(indexes = {@Index(name = "expense_type_index", columnList = "expenseType")})
 public class ExpenseTypeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

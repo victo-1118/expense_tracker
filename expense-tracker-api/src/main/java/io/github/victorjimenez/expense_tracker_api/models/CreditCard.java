@@ -7,9 +7,11 @@ import java.util.Set;
 import java.util.HashSet;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
+
 @Entity
 @DiscriminatorValue("CreditCard")
 @NoArgsConstructor
+
 /**
  * Represents a credit card with properties like card type, card number, credit limit, personal limit, balance, budget as well as fees including base and credit card fees.
  * Inherits from the BaseCard class and provides additional methods to get and set these properties

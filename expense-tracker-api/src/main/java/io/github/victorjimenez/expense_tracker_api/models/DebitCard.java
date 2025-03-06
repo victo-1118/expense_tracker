@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+ 
 @Entity
 @DiscriminatorValue("DebitCard")
 @NoArgsConstructor
+
 public class DebitCard extends BaseCard{
     private double budget;
     @ElementCollection
