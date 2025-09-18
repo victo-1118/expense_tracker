@@ -31,12 +31,13 @@ import lombok.NoArgsConstructor;
 public abstract class BaseCard{
     @ElementCollection
     @CollectionTable(name="base_card_fees", joinColumns = @JoinColumn(name = "card_number"))
-    @MapKeyEnumerated(EnumType.STRING)
-    @Column(name="baseFee_amount")
-    protected Map<BaseCardFeesType, Double> baseFees = new HashMap<>();
+    @MapKeyColumn(name="fee_type")
+    @Column(name="base_card_fee_amount")
+    protected Map<String, Double> baseFees = new HashMap<>();
     @Column(name = "card_provider")
     protected String cardProvider;
     protected double balance;
+    protected boolean active = true;
 
     @Id
     @Column(name= "card_number",unique = true, length = 4)
@@ -67,8 +68,17 @@ public abstract class BaseCard{
         this.cardNumber = cardNumber;
         this.balance = balance;
     }
+
+
+    /**
+     * Adds a fee to the card based on the provided fee type and amount.
+     * 
+     * @param feeType the type of fee to be added
+     * @param fee the amount of the fee
+     */
     public void addFee(BaseCardFeesType feeType, double fee){
-        baseFees.put(feeType, fee);
+        String feeTypeString = feeType.getDisplayName();
+        baseFees.put(feeTypeString, fee);
     }
     /**
      * Removes a fee from the card based on the provided fee type.
@@ -76,11 +86,36 @@ public abstract class BaseCard{
      * @param feeType the type of fee to be removed
      */
     public void removeFee(BaseCardFeesType feeType){
-        baseFees.remove(feeType);
+        String feeTypeString = feeType.getDisplayName();
+        baseFees.remove(feeTypeString);
     }
     public double getFee(BaseCardFeesType feeType){
-        return baseFees.get(feeType);
+        String feeTypeString = feeType.getDisplayName();
+        return baseFees.get(feeTypeString);
     }
+
+
+
+    /**
+     * Gets the fees of the base card. The map contains the display name of the fee type as the key and the fee amount as the value.
+     * @return the fees of the base card
+     */
+    public Map<String, Double> getFees(){
+        return baseFees;
+    }
+
+    public boolean isActive(){
+        return active;
+    }
+
+    public void setActive(boolean active){
+        this.active = active;
+    }
+    /**
+     * Sets the card number to the specified string.
+     * @param cardNumber the card number to set
+     */
+
     public void setCardNumber(String cardNumber){
         this.cardNumber = cardNumber;
     }
@@ -113,6 +148,10 @@ public abstract class BaseCard{
     }
     public void removeExpense(Expense expense){
         eligibleExpenses.remove(expense);
+    }
+
+    public void addEligibleExpenses(Set<Expense> eligibleExpenses){
+        this.eligibleExpenses.addAll(eligibleExpenses);
     }
 
     public void setBalance(double balance){

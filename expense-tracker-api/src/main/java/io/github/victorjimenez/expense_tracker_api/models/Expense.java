@@ -3,9 +3,11 @@ package io.github.victorjimenez.expense_tracker_api.models;
 import jakarta.persistence.*;
 import java.util.Objects;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.Set;
 import java.util.HashSet;
 import lombok.NoArgsConstructor;
+
 
 @Entity
 
@@ -15,18 +17,20 @@ public class Expense {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private boolean active = true;
     @OneToMany(mappedBy = "expensePaid", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<PaymentHistory> paymentHistories = new HashSet<>();
     private String expenseName;
     @ManyToMany(mappedBy = "eligibleExpenses")
     private Set<BaseCard> eligibleCards = new HashSet<>();
     @ManyToOne
-    @JoinColumn(name = "expense_type_id")
+    @JoinColumn(name = "expense_type_id", foreignKey = @ForeignKey(name="FK_EXPENSE_TYPE", foreignKeyDefinition = "FOREIGN KEY (expense_type_id) REFERENCES expense_type ON DELETE SET NULL"))
     private ExpenseTypeEntity expenseType;
     private double expenseAmount;
     private LocalDate expenseDate;
     private boolean reoccurring;
-    private LocalDate frequency;
+    private Period frequency;
    
     /**
      * Constructs an expense with the specified type, amount, and date.
@@ -38,7 +42,7 @@ public class Expense {
      * @param frequency the frequency of the reoccurring expense
      * 
      */
-    public Expense(ExpenseTypeEntity expenseType, double expenseAmount, LocalDate expenseDate, String expenseName, boolean reoccurring, LocalDate frequency) {
+    public Expense(ExpenseTypeEntity expenseType, double expenseAmount, LocalDate expenseDate, String expenseName, boolean reoccurring, Period frequency) {
         this.expenseType = expenseType;
         this.expenseAmount = expenseAmount;
         this.expenseDate = expenseDate;
@@ -52,6 +56,14 @@ public class Expense {
      */
     public Long getId(){
         return id;
+    }
+
+    public boolean isActive(){
+        return active;
+    }
+
+    public void setActive(boolean active){
+        this.active = active;
     }
     /**
      * Sets the type of expense.
@@ -110,11 +122,36 @@ public class Expense {
     public boolean getReoccurring(){
         return reoccurring;
     }
-    public void setFrequency(LocalDate frequency){
+    public void setFrequency(Period frequency){
         this.frequency = frequency;
     }
-    public LocalDate getFrequency(){
+    public Period getFrequency(){
         return frequency;
+    }
+    public void addPaymentHistory(PaymentHistory paymentHistory){
+        paymentHistories.add(paymentHistory);
+    }
+    public void removePaymentHistory(PaymentHistory paymentHistory){
+        paymentHistories.remove(paymentHistory);
+    }
+
+    public void addEligibleCard(BaseCard card){
+        eligibleCards.add(card);
+    }
+
+    public void removeEligibleCard(BaseCard card){
+        eligibleCards.remove(card);
+    }
+    public void setEligibleCards(Set<BaseCard> eligibleCards){
+        this.eligibleCards = eligibleCards;
+    }
+
+    public Set<BaseCard> getEligibleCards(){
+        return eligibleCards;
+    }
+
+    public Set<PaymentHistory> getPaymentHistories(){
+        return paymentHistories;
     }
     /**
      * Returns a string representation of the expense in the format:

@@ -2,8 +2,13 @@ package io.github.victorjimenez.expense_tracker_api.models;
 
 import java.util.Map;
 import java.util.Objects;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Set;
+
+import org.springframework.cglib.core.Local;
+import java.time.Period;
 import java.util.HashSet;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
@@ -18,33 +23,37 @@ import jakarta.persistence.*;
  *
  * @author Victor Jimenez Pucheta
  */
+
 public class CreditCard extends BaseCard{
     private double creditLimit;
     private double personalLimit;
     private double interestRate;
     private double minimumPayment;
+    private double minimumPaymentDynamic;
+    private Period periodDueDateAfterCycle;
+    private Period billingCyclePeriod;
+    private LocalDate startOfBillingCycle;
 
     @ElementCollection
     @CollectionTable(name="credit_card_fees", joinColumns = @JoinColumn(name="card_number"))
-    @MapKeyEnumerated(EnumType.STRING)
+    @MapKeyColumn(name="fee_type")
     @Column(name="credit_card_fee_amount")
-    private Map<CreditCardFeesType, Double> creditFees = new HashMap<>(); 
+    private Map<String, Double> creditFees = new HashMap<>(); 
 
-    /**
-     * Constructs a credit card with the specified card type, card number, credit limit, and personal limit.
-     * @param cardNumber
-     * @param cardProvider
-     * @param creditLimit
-     * @param personalLimit
-     * @param expenseTypeToPayFor
-     * @param balance
-     */
-    public CreditCard(String cardNumber, String cardProvider, double balance, double creditLimit, double personalLimit, double interestRate, double minimumPayment){ 
+
+    public CreditCard(String cardNumber, String cardProvider, double balance, double creditLimit, double personalLimit,
+     double interestRate, double minimumPayment, double minimumPaymentDynamic, Period periodDueDateAfterCycle, Period billingCyclePeriod, LocalDate startOfBillingCycle) {
+         
+     
         super(cardNumber, cardProvider, balance);
         this.creditLimit = creditLimit;
         this.personalLimit = personalLimit;
         this.interestRate = interestRate;
         this.minimumPayment = minimumPayment;
+        this.minimumPaymentDynamic = minimumPaymentDynamic;
+        this.periodDueDateAfterCycle = periodDueDateAfterCycle;
+        this.startOfBillingCycle = startOfBillingCycle;
+        this.billingCyclePeriod = billingCyclePeriod;
     }
 
     /**
@@ -62,6 +71,7 @@ public class CreditCard extends BaseCard{
     public double getCreditLimit(){
         return creditLimit;
     }
+
 
     /**
      * Sets the personal limit of the credit card.
@@ -93,17 +103,55 @@ public class CreditCard extends BaseCard{
         return minimumPayment;
     }
 
+    public void setMinimumPaymentDynamic(double minimumPaymentDynamic){
+        this.minimumPaymentDynamic = minimumPaymentDynamic;
+    }
+    public double getMinimumPaymentDynamic(){
+        return minimumPaymentDynamic;
+    }
+
+    public void setPeriodDueDateAfterCycle(Period periodDueDateAfterCycle){
+        this.periodDueDateAfterCycle = periodDueDateAfterCycle;
+    }
+    public Period getPeriodDueDateAfterCycle(){
+        return periodDueDateAfterCycle;
+    }
+
+    public void setStartOfBillingCycle(LocalDate startOfBillingCycle){
+       
+        this.startOfBillingCycle = startOfBillingCycle;
+    }
+    public LocalDate getStartOfBillingCycle(){
+        return startOfBillingCycle;
+    }
+
     public void addCreditFee(CreditCardFeesType feeType, double fee){
-        creditFees.put(feeType, fee);
+        String feeTypeString = feeType.getDisplayName();
+        creditFees.put(feeTypeString, fee);
+    }
+
+    public void setBillingCyclePeriod(Period billingCyclePeriod){
+        this.billingCyclePeriod = billingCyclePeriod;
+    }
+
+    public Period getBillingCyclePeriod(){
+        return billingCyclePeriod;
     }
 
     public double getCreditFee(CreditCardFeesType feeType){
-        return creditFees.get(feeType);
+        String feeTypeString = feeType.getDisplayName();
+        return creditFees.get(feeTypeString);
+    }
+
+    public Map<String, Double> getCreditFees(){
+        return creditFees;
     }
 
     public void removeCreditFee(CreditCardFeesType feeType){
-        creditFees.remove(feeType);
+        String feeTypeString = feeType.getDisplayName();
+        creditFees.remove(feeTypeString);
     }
+
     /**
      * Returns a string representation of the credit card in the format:
      * "CreditCard[cardType=<cardType>, cardNumber=<cardNumber>, creditLimit=<creditLimit>, personalLimit=<personalLimit>, expenseTypeToPayFor={<expenseTypeToPayFor>}, balance=<balance>, fees={<fees>}]"
@@ -142,9 +190,9 @@ public class CreditCard extends BaseCard{
 
         }
         String eligibleExpensesBuildersString = eligibleExpensesBuilder.toString();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         
-        
-        return "DebitCard[" +
+        return "CreditCard[" +
                "cardNumber='" + cardNumber + "', " +
                "cardProvider='" + cardProvider + "', " +
                "balance=" + balance + ", " +
@@ -152,6 +200,10 @@ public class CreditCard extends BaseCard{
                "personalLimit=" + personalLimit + ", " +
                 "interestRate=" + interestRate + ", " +
                 "minimumPayment=" + minimumPayment + ", " +
+                "minimumPaymentDynamic=" + minimumPaymentDynamic + ", " +
+                "periodDueDateAfterCycle=" + periodDueDateAfterCycle.toString() + ", " +
+                "billingCyclePeriod=" + billingCyclePeriod.toString() + ", " +
+                "startOfBillingCycle=" + startOfBillingCycle.format(formatter) + ", " +
                "expenseTypeToPayFor=[" + eligibleExpensesBuilderTypesString + "]" +
                ", eligibleExpenses=[" + eligibleExpensesBuildersString + "]" +
                 ", paymentHistories=[" + paymentHistoriesString + "]" +
@@ -193,7 +245,12 @@ public class CreditCard extends BaseCard{
           Objects.equals(expenseTypeToPayForSet, thatExpenseTypeToPayForSet) && Objects.equals(balance, that.balance)
            && Objects.equals(interestRate, that.interestRate) && Objects.equals(minimumPayment, that.minimumPayment)
            && Objects.equals(creditFees, that.creditFees) && Objects.equals(baseFees, that.baseFees) && 
-           Objects.equals(eligibleExpensesBuildersSet, thatEligibleExpensesSet) && Objects.equals(paymentHistoriesSet, thatPaymentHistoriesSet); 
+           Objects.equals(eligibleExpensesBuildersSet, thatEligibleExpensesSet) &&
+            Objects.equals(paymentHistoriesSet, thatPaymentHistoriesSet) &&
+             Objects.equals(periodDueDateAfterCycle, that.periodDueDateAfterCycle) &&
+             Objects.equals(billingCyclePeriod, that.billingCyclePeriod) &&
+              Objects.equals(startOfBillingCycle, that.startOfBillingCycle) && 
+            Objects.equals(minimumPaymentDynamic, that.minimumPaymentDynamic); 
     }
 
     @Override
@@ -211,7 +268,8 @@ public class CreditCard extends BaseCard{
             paymentHistoriesSet.add(paymentHistory.getId());
         }
         return Objects.hash(cardNumber, cardProvider, creditLimit, personalLimit, expenseTypeToPayForSet,
-         balance, interestRate, minimumPayment, creditFees, baseFees, eligibleExpensesBuildersSet, paymentHistoriesSet);
+         balance, interestRate, minimumPayment, minimumPaymentDynamic, periodDueDateAfterCycle,
+          billingCyclePeriod, startOfBillingCycle, creditFees, baseFees, eligibleExpensesBuildersSet, paymentHistoriesSet);
     }
 }
 

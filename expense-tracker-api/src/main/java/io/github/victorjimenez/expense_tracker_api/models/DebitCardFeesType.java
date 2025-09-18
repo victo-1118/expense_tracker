@@ -14,4 +14,17 @@ public enum DebitCardFeesType {
     public String getDisplayName(){
         return displayName;
     }
+
+    public static DebitCardFeesType fromString(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null; // Or throw an exception, depending on your needs.
+        }
+        for (DebitCardFeesType feeType : DebitCardFeesType.values()) {
+            if (feeType.getDisplayName().equalsIgnoreCase(text)) {
+                return feeType;
+            }
+        }
+        
+        throw new IllegalArgumentException("Invalid DebitCardFeesType: " + text + ""); // Or throw new IllegalArgumentException("Invalid BaseCardFeesType: " + text);
+    }
 }

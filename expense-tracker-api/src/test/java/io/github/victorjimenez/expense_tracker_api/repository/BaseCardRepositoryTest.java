@@ -12,11 +12,13 @@ import io.github.victorjimenez.expense_tracker_api.models.CreditCardFeesType;
 import io.github.victorjimenez.expense_tracker_api.models.CreditCard;
 import io.github.victorjimenez.expense_tracker_api.models.PaymentHistory;
 import io.github.victorjimenez.expense_tracker_api.models.Expense;
+import java.util.Set;
 import io.github.victorjimenez.expense_tracker_api.models.BaseCard;
 import io.github.victorjimenez.expense_tracker_api.repository.PaymentHistoryRepository;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,10 +69,10 @@ public class BaseCardRepositoryTest {
         debitCardFeesType2 = DebitCardFeesType.ATM_FEE;
         creditCardFeesType1 = CreditCardFeesType.LATE_FEE;
         creditCardFeesType2 = CreditCardFeesType.OVERLIMIT_FEE;
-        expenseTypeEntity1 = new ExpenseTypeEntity("Groceries", 500., 300.);
-        expenseTypeEntity2 = new ExpenseTypeEntity("Clothing", 100., 50.);
-        expenseTypeEntity3 = new ExpenseTypeEntity("Entertainment", 600., 400.);
-        expenseTypeEntity4 = new ExpenseTypeEntity("Travel", 500., 300.);
+        expenseTypeEntity1 = new ExpenseTypeEntity("Groceries", 500.);
+        expenseTypeEntity2 = new ExpenseTypeEntity("Clothing", 100.);
+        expenseTypeEntity3 = new ExpenseTypeEntity("Entertainment", 600.);
+        expenseTypeEntity4 = new ExpenseTypeEntity("Travel", 500.);
         expenseTypeRepository.saveAll(Arrays.asList(expenseTypeEntity1, expenseTypeEntity2, expenseTypeEntity3, expenseTypeEntity4));        
         debitCard1 = new DebitCard("1234", "Visa", 100., 50.);
         baseCardRepository.save(debitCard1);
@@ -95,20 +97,20 @@ public class BaseCardRepositoryTest {
         debitCard3.addFee(baseCardFeesType1, 70.);
         debitCard3.addDebitFee(debitCardFeesType2, 80.);
         baseCardRepository.save(debitCard3);
-        creditCard1 = new CreditCard("1235", "Visa", -100., 50., 25., 0.05, 10.);
+        creditCard1 = new CreditCard("1235", "Visa", -100., 50., 25., 0.05, 10., 0.02, Period.ofDays(25), Period.ofDays(30), LocalDate.of(2023, 6, 1));
         baseCardRepository.save(creditCard1);
         creditCard1.addExpenseTypeToPayFor(expenseTypeEntity1);
         creditCard1.addCreditFee(creditCardFeesType1, 20.);
         creditCard1.addCreditFee(creditCardFeesType2, 50.);
         baseCardRepository.save(creditCard1);
-        creditCard2 = new CreditCard("5679", "Mastercard", -200., 100., 25., 0.05, 10.);
+        creditCard2 = new CreditCard("5679", "Mastercard", -200., 100., 25., 0.05, 10., 0.03, Period.ofDays(24), Period.ofDays(30), LocalDate.of(2023, 6, 1));
         baseCardRepository.save(creditCard2);
         creditCard2.addExpenseTypeToPayFor(expenseTypeEntity2);
         creditCard2.addExpenseTypeToPayFor(expenseTypeEntity4);
         creditCard2.addCreditFee(creditCardFeesType1, 30.);
         creditCard2.addFee(baseCardFeesType1, 40.);
         baseCardRepository.save(creditCard2);
-        creditCard3 = new CreditCard("9102", "Visa", -200., 150., 25., 0.05, 10.);
+        creditCard3 = new CreditCard("9102", "Visa", -200., 150., 25., 0.05, 10., 0.02, Period.ofDays(25), Period.ofDays(30), LocalDate.of(2023, 6, 1));
         baseCardRepository.save(creditCard3);
         creditCard3.addExpenseTypeToPayFor(expenseTypeEntity4);
         creditCard3.addCreditFee(creditCardFeesType2, 60.);
@@ -139,40 +141,40 @@ public class BaseCardRepositoryTest {
     }
     @Test
     void basicSearches(){
-        Set<BaseCard> cardsVisa = baseCardRepository.findByCardProvider("Visa");
+        List<BaseCard> cardsVisa = baseCardRepository.findByCardProvider("Visa");
         assertEquals(4, cardsVisa.size(), "base card repository getByCardProvider() does not work right ");
-        Set<BaseCard> cardsBalanceNegative200 = baseCardRepository.findByBalance(-200.);
+        List<BaseCard> cardsBalanceNegative200 = baseCardRepository.findByBalance(-200.);
         assertEquals(2, cardsBalanceNegative200.size(), "Base card repository getByBalance() does not work");
-        Set<BaseCard> cardsBalance500 = baseCardRepository.findByBalance(500.);
+        List<BaseCard> cardsBalance500 = baseCardRepository.findByBalance(500.);
         assertEquals(0, cardsBalance500.size(), "Base card repository getByBalance() doesd not work");
-        Set<BaseCard> cardsBalanceBetweenNegative100To300 = baseCardRepository.findByBalanceBetween(-100., 300.);
+        List<BaseCard> cardsBalanceBetweenNegative100To300 = baseCardRepository.findByBalanceBetween(-100., 300.);
         assertEquals(4,cardsBalanceBetweenNegative100To300.size(), "Base Card repository getByBalanceBetween() does not work right" ); 
     }
     @Test
     void oneToManySearches(){
-        Set<BaseCard> cardsWithBaseFee40 = baseCardRepository.findByBaseFeeAmount(40.);
+        List<BaseCard> cardsWithBaseFee40 = baseCardRepository.findByBaseFeeAmount(40.);
         assertEquals(2, cardsWithBaseFee40.size(), "Base card repository getByBaseFeeAmount() does not work right");
-        Set<BaseCard> cardsWithBaseFeeBetween20And50 = baseCardRepository.findByBaseFeeAmountBetween(20., 50.);
+        List<BaseCard> cardsWithBaseFeeBetween20And50 = baseCardRepository.findByBaseFeeAmountBetween(20., 50.);
         assertEquals(3, cardsWithBaseFeeBetween20And50.size(), "Base card repository getByBaseFeeAmountBetween() does not work right");
         
     }
 
     @Test
     void manyToManySearches(){
-        Set<BaseCard> cardsWithExpenseType1 = baseCardRepository.findByExpenseTypeToPayFor_IdIn(Set.of(expenseTypeEntity1.getId()));
+        List<BaseCard> cardsWithExpenseType1 = baseCardRepository.findByExpenseTypeToPayFor_IdIn(List.of(expenseTypeEntity1.getId()));
         assertEquals(2, cardsWithExpenseType1.size(), "Base card repository getByExpenseTypeToPayFor_IdIn() does not work right");
-        Set<BaseCard> cardsWithExpenseType2 = baseCardRepository.findByExpenseTypeToPayFor_IdIn(Set.of(expenseTypeEntity2.getId(), expenseTypeEntity3.getId()));
+        List<BaseCard> cardsWithExpenseType2 = baseCardRepository.findByExpenseTypeToPayFor_IdIn(List.of(expenseTypeEntity2.getId(), expenseTypeEntity3.getId()));
         assertEquals(4, cardsWithExpenseType2.size(), "Base card repository getByExpenseTypeToPayFor_IdIn() does not work right");
-        Set<BaseCard> cardsWithAtLeastExpenseType2AndExpenseType4 = baseCardRepository.findByAllExpenseTypes(Set.of(expenseTypeEntity2.getId(), expenseTypeEntity4.getId()), 2);
+        List<BaseCard> cardsWithAtLeastExpenseType2AndExpenseType4 = baseCardRepository.findByAllExpenseTypes(List.of(expenseTypeEntity2.getId(), expenseTypeEntity4.getId()), 2);
         assertEquals(2, cardsWithAtLeastExpenseType2AndExpenseType4.size(), "Base card repository getByAllExpenseTypes() does not work right");
-        Set<BaseCard> cardsWithAtLeastExpenseType4or3 = baseCardRepository.findByExpenseTypeToPayFor_IdIn(Set.of(expenseTypeEntity4.getId(), expenseTypeEntity3.getId()));
+        List<BaseCard> cardsWithAtLeastExpenseType4or3 = baseCardRepository.findByExpenseTypeToPayFor_IdIn(List.of(expenseTypeEntity4.getId(), expenseTypeEntity3.getId()));
         assertEquals(4, cardsWithAtLeastExpenseType4or3.size(), "Base card repository getByExpenseTypeToPayFor_IdIn() does not work right");
         
-        Set<BaseCard> cardsWithExpense1 = baseCardRepository.findByEligibleExpenses_IdIn(Set.of(expense1.getId()));
+        List<BaseCard> cardsWithExpense1 = baseCardRepository.findByEligibleExpenses_IdIn(List.of(expense1.getId()));
         assertEquals(3, cardsWithExpense1.size(), "Base card repository getByEligibleExpenses_IdIn() does not work right");
-        Set<BaseCard> cardsWithExpense2or3 = baseCardRepository.findByEligibleExpenses_IdIn(Set.of(expense2.getId(), expense3.getId()));
+        List<BaseCard> cardsWithExpense2or3 = baseCardRepository.findByEligibleExpenses_IdIn(List.of(expense2.getId(), expense3.getId()));
         assertEquals(4, cardsWithExpense2or3.size(), "Base card repository getByEligibleExpenses_IdIn() does not work right");
-        Set<BaseCard> cardsWithAtLeastExpense2AndExpense3 = baseCardRepository.findByAllExpenses(Set.of(expense2.getId(), expense3.getId()), 2);
+        List<BaseCard> cardsWithAtLeastExpense2AndExpense3 = baseCardRepository.findByAllExpenses(List.of(expense2.getId(), expense3.getId()), 2);
         assertEquals(1, cardsWithAtLeastExpense2AndExpense3.size(), "Base card repository getByAllExpenses() does not work right");
     }
     

@@ -16,8 +16,8 @@ public class ExpenseTest {
     private LocalDate date2;
     @BeforeEach
     void setUp() {
-        expenseTypeEntity = new ExpenseTypeEntity("Grocery", 100., 50.);
-        expenseTypeEntity2 = new ExpenseTypeEntity("Clothing", 100., 50.);
+        expenseTypeEntity = new ExpenseTypeEntity("Grocery", 100. );
+        expenseTypeEntity2 = new ExpenseTypeEntity("Clothing", 100.);
         
         date1 = LocalDate.of(2025,2, 20);
         date2 = LocalDate.of(2025,2, 21);

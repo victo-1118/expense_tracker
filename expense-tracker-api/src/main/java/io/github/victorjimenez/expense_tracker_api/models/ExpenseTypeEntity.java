@@ -12,10 +12,12 @@ public class ExpenseTypeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private boolean active = true;
     @Column(unique = true)
     private String expenseType;
+    // theres an argument for this being nullable
     private double budgetAmount;
-    private double actualSpent;
+
 
     @ManyToMany(mappedBy = "expenseTypeToPayFor")
     private Set<BaseCard> baseCards = new HashSet<>();
@@ -24,11 +26,19 @@ public class ExpenseTypeEntity {
      * Constructs an expense type entity with the specified type.
      * @param expenseType the type of expense
      */
-    public ExpenseTypeEntity(String expenseType, double budgetAmount, double actualSpent) {
+    public ExpenseTypeEntity(String expenseType, double budgetAmount) {
         this.expenseType = expenseType;
         this.budgetAmount = budgetAmount;
-        this.actualSpent = actualSpent;
+        
     }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isActive() {
+        return active;
+    }   
     /**
      * Returns the type of expense.
      * @return the type of expense
@@ -67,13 +77,20 @@ public class ExpenseTypeEntity {
         return budgetAmount;
     }   
 
-    public void setActualSpent(double actualSpent) {
-        this.actualSpent = actualSpent;
+    public void addBaseCard(BaseCard baseCard) {
+        baseCards.add(baseCard);
     }
 
-    public double getActualSpent() {
-        return actualSpent;
+    public void removeBaseCard(BaseCard baseCard) {
+        baseCards.remove(baseCard);
     }
+    public Set<BaseCard> getBaseCards() {
+        return baseCards;
+    }
+
+    
+
+
     @Override
     public String toString(){
        Set<String> cardNumbers = new HashSet<>();
@@ -85,7 +102,7 @@ public class ExpenseTypeEntity {
                 ", expenseType='" + expenseType + "'" +
   
                 ", budgetAmount=" + budgetAmount +
-                ", actualSpent=" + actualSpent +
+
                 ", baseCards=" + cardNumbers.toString() +
                 ']';
     }
@@ -107,7 +124,7 @@ public class ExpenseTypeEntity {
         }
         ExpenseTypeEntity that = (ExpenseTypeEntity) obj;
         return Objects.equals(id, that.id) && Objects.equals(expenseType, that.expenseType) &&
-         Objects.equals(budgetAmount, that.budgetAmount) && Objects.equals(actualSpent, that.actualSpent) &&
+         Objects.equals(budgetAmount, that.budgetAmount) && 
          Objects.equals(baseCards, that.baseCards);
     }
     /**
@@ -121,7 +138,7 @@ public class ExpenseTypeEntity {
         for (BaseCard baseCard : baseCards) {
             cardNumbers.add(baseCard.getCardNumber());
         }
-        return Objects.hash(id, expenseType, budgetAmount, actualSpent, cardNumbers);
+        return Objects.hash(id, expenseType, budgetAmount, cardNumbers);
     }
 }
 

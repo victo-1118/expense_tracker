@@ -21,8 +21,8 @@ public class ExpenseTypeEntityTest {
     private  ExpenseTypeEntity expenseTypeEntity3;
     @BeforeEach
     void setUp() {
-        expenseTypeEntity = new ExpenseTypeEntity("Groceries", 500., 300.);
-        expenseTypeEntity3 = new ExpenseTypeEntity("Entertainment", 500., 300.);
+        expenseTypeEntity = new ExpenseTypeEntity("Groceries", 500.);
+        expenseTypeEntity3 = new ExpenseTypeEntity("Entertainment", 500.);
         expenseTypeRepository.save(expenseTypeEntity);
 
     }
@@ -38,7 +38,7 @@ public class ExpenseTypeEntityTest {
     public void testToStringExpenseTypeEntity() {
         String actual = expenseTypeEntity.toString();
         String id = actual.substring(21, 23);
-        assertEquals("ExpenseTypeEntity[id=" + id + ", expenseType='Groceries', budgetAmount=500.0, actualSpent=300.0, baseCards=[]]", expenseTypeEntity.toString(), "toString failed");
+        assertEquals("ExpenseTypeEntity[id=" + id + ", expenseType='Groceries', budgetAmount=500.0, baseCards=[]]", expenseTypeEntity.toString(), "toString failed");
     }
 
 
@@ -60,7 +60,7 @@ public class ExpenseTypeEntityTest {
     void testUniqueConstraintViolation() {
 
         // When & Then
-        ExpenseTypeEntity expenseType2 = new ExpenseTypeEntity("Groceries", 500., 300.);
+        ExpenseTypeEntity expenseType2 = new ExpenseTypeEntity("Groceries", 500.);
         assertThrows(DataIntegrityViolationException.class, () -> {
             expenseTypeRepository.save(expenseType2);
             expenseTypeRepository.flush(); // Force the persistence

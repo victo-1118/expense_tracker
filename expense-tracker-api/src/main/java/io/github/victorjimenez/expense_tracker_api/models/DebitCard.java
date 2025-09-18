@@ -16,9 +16,9 @@ public class DebitCard extends BaseCard{
     private double budget;
     @ElementCollection
     @CollectionTable(name="debit_card_fees", joinColumns = @JoinColumn(name="card_number"))
-    @MapKeyEnumerated(EnumType.STRING)
-    @Column(name="debit_card_fee_amount")
-    private Map<DebitCardFeesType, Double> debitFees = new HashMap<>();
+    @MapKeyColumn(name="fee_type")  
+    @Column(name="debit_card_fee_amount")  
+    private Map<String, Double> debitFees = new HashMap<>();
 
     /**
      * Constructs a debit card with the specified card type, card number, balance, and budget.
@@ -51,15 +51,22 @@ public class DebitCard extends BaseCard{
     }
 
     public void addDebitFee(DebitCardFeesType feeType, double fee){
-        debitFees.put(feeType, fee);
+        String feeTypeString = feeType.getDisplayName();
+        debitFees.put(feeTypeString, fee);
     }
 
     public void removeDebitFee(DebitCardFeesType feeType){
-        debitFees.remove(feeType);
+        String feeTypeString = feeType.getDisplayName();
+        debitFees.remove(feeTypeString);
     }
 
     public double getDebitFee(DebitCardFeesType feeType){
-        return debitFees.get(feeType);
+        String feeTypeString = feeType.getDisplayName();
+        return debitFees.get(feeTypeString);
+    }
+
+    public Map<String, Double> getDebitFees(){
+        return debitFees;
     }
     
 

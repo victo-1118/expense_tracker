@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.cglib.core.Local;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -12,7 +13,11 @@ import java.util.HashSet;
 import java.util.Set;
 import io.github.victorjimenez.expense_tracker_api.repository.DebitCardRepository;
 import io.github.victorjimenez.expense_tracker_api.repository.ExpenseTypeRepository;
+import io.github.victorjimenez.expense_tracker_api.repository.PaymentHistoryRepository;
+import io.github.victorjimenez.expense_tracker_api.snapshots.DebitCardSnapshot;
+import io.github.victorjimenez.expense_tracker_api.snapshots.ExpenseSnapshot;
 import jakarta.persistence.PersistenceException;
+import java.time.LocalDate;
 /**
  * Unit tests for the DebitCard class and for the BaseCard tests
  * Test unique constraints and size constraints as well as all 
@@ -27,7 +32,10 @@ public class DebitCardTest {
     private ExpenseTypeRepository expenseTypeRepository;
     @Autowired
     private TestEntityManager entityManager;
+    @Autowired
+    private PaymentHistoryRepository paymentHistoryRepository;
     private DebitCard myDebitCard;
+    private DebitCardSnapshot myDebitCardSnapshot;
     private DebitCard myOtherDebitCard;
     private Set<ExpenseTypeEntity> expenseTypeEntities;
     private ExpenseTypeEntity expenseTypeEntity;
@@ -35,6 +43,9 @@ public class DebitCardTest {
     private ExpenseTypeEntity expenseTypeEntity3;
     private BaseCardFeesType baseCardFeesType;
     private DebitCardFeesType debitCardFeesType;
+    private PaymentHistory paymentHistory;
+    private Expense expense1;
+    private ExpenseSnapshot expense1Snapshot;
     @BeforeEach
     void setUp(){
         entityManager.clear();
@@ -43,9 +54,9 @@ public class DebitCardTest {
         debitCardFeesType = DebitCardFeesType.OVERDRAFT_FEE;
 
         
-        expenseTypeEntity = expenseTypeRepository.saveAndFlush(new ExpenseTypeEntity("Groceries", 500., 300.));
-        expenseTypeEntity2 = expenseTypeRepository.saveAndFlush(new ExpenseTypeEntity("Clothing", 100., 50.));
-        expenseTypeEntity3 = expenseTypeRepository.saveAndFlush(new ExpenseTypeEntity("Entertainment", 500., 300.));
+        expenseTypeEntity = expenseTypeRepository.saveAndFlush(new ExpenseTypeEntity("Groceries", 500.));
+        expenseTypeEntity2 = expenseTypeRepository.saveAndFlush(new ExpenseTypeEntity("Clothing", 100.));
+        expenseTypeEntity3 = expenseTypeRepository.saveAndFlush(new ExpenseTypeEntity("Entertainment", 500.));
         
         expenseTypeEntities = new HashSet<>();
         expenseTypeEntities.add(expenseTypeEntity);
@@ -54,12 +65,19 @@ public class DebitCardTest {
         myDebitCard = new DebitCard("1234", "Visa", 100., 50.);
         myDebitCard.addExpenseTypeToPayFor(expenseTypeEntity);
         myDebitCard.addExpenseTypeToPayFor(expenseTypeEntity2);
-
+        expense1 = new Expense(expenseTypeEntity, 50., LocalDate.now(), "Bread", false, null);
         myOtherDebitCard = new DebitCard("5678", "Mastercard", 200., 100.);
         myOtherDebitCard.addExpenseTypeToPayFor(expenseTypeEntity3);
 
         myDebitCard = debitCardRepository.saveAndFlush(myDebitCard);
         myOtherDebitCard = debitCardRepository.saveAndFlush(myOtherDebitCard);
+        myDebitCardSnapshot = new DebitCardSnapshot(myDebitCard);
+        expense1Snapshot = new ExpenseSnapshot(expense1);
+
+        paymentHistory = new PaymentHistory(expense1, 10, LocalDate.now(), myDebitCard, myDebitCardSnapshot, expense1Snapshot);
+        paymentHistory = paymentHistoryRepository.saveAndFlush(paymentHistory);
+
+
         
 
     }
@@ -81,6 +99,16 @@ public class DebitCardTest {
         assertThrows(NullPointerException.class, () -> {
             myDebitCard.getDebitFee(debitCardFeesType);
         }, "removeDebitFee failed");
+        myDebitCard.addFee(baseCardFeesType, 10.);
+        assertEquals(10., myDebitCard.getFee(baseCardFeesType), "addFee failed");
+        myDebitCard.removeFee(baseCardFeesType);
+        assertThrows(NullPointerException.class, () -> {
+            myDebitCard.getFee(baseCardFeesType);
+        }, "removeFee failed");
+        myDebitCard.addPaymentHistory(paymentHistory);
+        assertEquals(true, myDebitCard.getPaymentHistories().contains(paymentHistory), "addPaymentHistory failed");
+        myDebitCard.removePaymentHistory(paymentHistory);
+        assertTrue(myDebitCard.getPaymentHistories().isEmpty(), "removePaymentHistory failed");
     }
     //This test is kind of iffy because it's testing the toString method but when adding ids to the string it doesn't
     //add the ids in the same order as the expected string so it will fail if not added correctly
@@ -88,13 +116,14 @@ public class DebitCardTest {
     // and maybe change the way the ids are added to the string
     @Test
     void testToStringDebitCard() {
-        Set<Long> expenseTypeToPayForSet = new HashSet<>();
+        StringBuilder expenseTypeToPayForSet = new StringBuilder();
         for (ExpenseTypeEntity expenseType : myDebitCard.getExpenseTypeToPayFor()) {
-            expenseTypeToPayForSet.add(expenseType.getId());
+            expenseTypeToPayForSet.append(expenseType.getId()).append(", ");
         }
+        expenseTypeToPayForSet.delete(expenseTypeToPayForSet.length() - 2, expenseTypeToPayForSet.length()); //removes the last comma (2)
         String expenseString = expenseTypeToPayForSet.toString();
         String expected = String.format("DebitCard[cardNumber='1234', cardProvider='Visa', balance=100.0, budget=50.0, " +
-                "expenseTypeToPayFor=%s, eligibleExpenses=[], paymentHistories=[], baseFees={}, debitFees={}]", 
+                "expenseTypeToPayFor=[%s], eligibleExpenses=[], paymentHistories=[], baseFees={}, debitFees={}]", 
                 expenseString);
         String actual = myDebitCard.toString();
         assertEquals(expected, actual, 
